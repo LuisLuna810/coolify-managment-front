@@ -1,0 +1,244 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Updated design tokens to match the design brief */
+  --background: oklch(1 0 0); /* #ffffff */
+  --foreground: oklch(0.556 0.014 258.338); /* #475569 */
+  --card: oklch(0.984 0.003 197.137); /* #ecfeff */
+  --card-foreground: oklch(0.478 0.015 257.57); /* #374151 */
+  --popover: oklch(1 0 0); /* #ffffff */
+  --popover-foreground: oklch(0.478 0.015 257.57); /* #374151 */
+  --primary: oklch(0.395 0.094 200.975); /* #164e63 */
+  --primary-foreground: oklch(1 0 0); /* #ffffff */
+  --secondary: oklch(0.748 0.204 110.725); /* #84cc16 */
+  --secondary-foreground: oklch(1 0 0); /* #ffffff */
+  --muted: oklch(0.984 0.008 142.499); /* #f0fdf4 */
+  --muted-foreground: oklch(0.478 0.015 257.57); /* #374151 */
+  --accent: oklch(0.748 0.204 110.725); /* #84cc16 */
+  --accent-foreground: oklch(1 0 0); /* #ffffff */
+  --destructive: oklch(0.577 0.245 27.325); /* #dc2626 */
+  --destructive-foreground: oklch(1 0 0); /* #ffffff */
+  --border: oklch(0.898 0.002 286.062); /* #d1d5db */
+  --input: oklch(0.985 0.002 228.571); /* #f9fafb */
+  --ring: oklch(0.395 0.094 200.975 / 0.5); /* rgba(22, 78, 99, 0.5) */
+  --chart-1: oklch(0.548 0.227 264.376); /* #4f46e5 */
+  --chart-2: oklch(0.628 0.258 233.339); /* #3b82f6 */
+  --chart-3: oklch(0.696 0.17 162.48); /* #10b981 */
+  --chart-4: oklch(0.768 0.171 70.67); /* #f59e0b */
+  --chart-5: oklch(0.577 0.245 27.325); /* #dc2626 */
+  --radius: 0.5rem;
+  --sidebar: oklch(0.984 0.003 197.137); /* #ecfeff */
+  --sidebar-foreground: oklch(0.478 0.015 257.57); /* #374151 */
+  --sidebar-primary: oklch(0.395 0.094 200.975); /* #164e63 */
+  --sidebar-primary-foreground: oklch(1 0 0); /* #ffffff */
+  --sidebar-accent: oklch(0.748 0.204 110.725); /* #84cc16 */
+  --sidebar-accent-foreground: oklch(1 0 0); /* #ffffff */
+  --sidebar-border: oklch(0.898 0.002 286.062); /* #d1d5db */
+  --sidebar-ring: oklch(0.395 0.094 200.975 / 0.5); /* rgba(22, 78, 99, 0.5) */
+}
+
+.dark {
+  --background: oklch(0.13 0 0); /* #212121 - Gris muy oscuro en lugar de negro */
+  --foreground: oklch(0.95 0 0); /* #f5f5f5 - Texto claro */
+  --card: oklch(0.16 0 0); /* #292929 - Tarjetas gris oscuro */
+  --card-foreground: oklch(0.95 0 0); /* #f5f5f5 - Texto en tarjetas */
+  --popover: oklch(0.16 0 0); /* #292929 - Popovers gris oscuro */
+  --popover-foreground: oklch(0.95 0 0); /* #f5f5f5 - Texto en popovers */
+  --primary: oklch(0.6 0.15 220); /* #3b82f6 - Azul primario más vibrante */
+  --primary-foreground: oklch(0.98 0 0); /* #fafafa - Texto sobre primario */
+  --secondary: oklch(0.28 0 0); /* #474747 - Gris medio oscuro para secundario */
+  --secondary-foreground: oklch(0.95 0 0); /* #f5f5f5 - Texto sobre secundario */
+  --muted: oklch(0.22 0 0); /* #383838 - Elementos silenciados gris oscuro */
+  --muted-foreground: oklch(0.7 0 0); /* #b3b3b3 - Texto silenciado */
+  --accent: oklch(0.65 0.2 160); /* #10b981 - Verde esmeralda para acentos */
+  --accent-foreground: oklch(0.98 0 0); /* #fafafa - Texto sobre acento */
+  --destructive: oklch(0.6 0.25 15); /* #ef4444 - Rojo para destructivo */
+  --destructive-foreground: oklch(0.98 0 0); /* #fafafa - Texto destructivo */
+  --border: oklch(0.4 0 0); /* #666666 - Bordes más claros y visibles */
+  --input: oklch(0.2 0 0); /* #333333 - Inputs gris oscuro */
+  --ring: oklch(0.6 0.15 220 / 0.8); /* Anillo de focus más visible */
+  --chart-1: oklch(0.6 0.15 220); /* #3b82f6 - Azul */
+  --chart-2: oklch(0.65 0.2 160); /* #10b981 - Verde */
+  --chart-3: oklch(0.7 0.18 70); /* #f59e0b - Amarillo */
+  --chart-4: oklch(0.65 0.25 310); /* #8b5cf6 - Púrpura */
+  --chart-5: oklch(0.6 0.25 15); /* #ef4444 - Rojo */
+  --sidebar: oklch(0.15 0 0); /* #262626 - Sidebar gris muy oscuro */
+  --sidebar-foreground: oklch(0.9 0 0); /* #e5e5e5 - Texto sidebar */
+  --sidebar-primary: oklch(0.6 0.15 220); /* #3b82f6 - Primario sidebar */
+  --sidebar-primary-foreground: oklch(0.98 0 0); /* #fafafa - Texto primario sidebar */
+  --sidebar-accent: oklch(0.28 0 0); /* #474747 - Acento sidebar */
+  --sidebar-accent-foreground: oklch(0.95 0 0); /* #f5f5f5 - Texto acento sidebar */
+  --sidebar-border: oklch(0.4 0 0); /* #666666 - Bordes sidebar más visibles */
+  --sidebar-ring: oklch(0.6 0.15 220 / 0.8); /* Ring sidebar más visible */
+}
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  
+  /* Mejorar la visibilidad de elementos interactivos en tema oscuro */
+  .dark button[type="button"],
+  .dark button[type="submit"],
+  .dark input,
+  .dark textarea,
+  .dark select {
+    border-width: 1px;
+    border-color: oklch(0.4 0 0); /* Bordes más visibles */
+  }
+  
+  .dark button:hover,
+  .dark input:hover,
+  .dark textarea:hover,
+  .dark select:hover {
+    border-color: oklch(0.5 0 0); /* Bordes aún más claros al hacer hover */
+  }
+  
+  .dark button:focus,
+  .dark input:focus,
+  .dark textarea:focus,
+  .dark select:focus {
+    border-color: oklch(0.6 0.15 220); /* Borde azul al enfocar */
+    box-shadow: 0 0 0 2px oklch(0.6 0.15 220 / 0.2); /* Sombra de foco */
+  }
+  
+  /* Mejorar tarjetas y contenedores */
+  .dark [data-role="card"],
+  .dark .card {
+    border: 1px solid oklch(0.35 0 0); /* Bordes sutiles pero visibles para tarjetas */
+  }
+  
+  /* Efectos de hover mejorados para botones */
+  button[data-slot="button"] {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateY(0);
+    cursor: pointer; /* Manito al pasar por encima */
+  }
+  
+  button[data-slot="button"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  }
+  
+  .dark button[data-slot="button"]:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+  }
+  
+  /* Efecto de ondas al hacer clic */
+  button[data-slot="button"]:active {
+    transform: translateY(-1px);
+    transition: transform 0.1s ease;
+  }
+  
+  /* Efectos específicos por variante de botón */
+  button[data-slot="button"]:hover[class*="bg-primary"] {
+    background-color: oklch(0.65 0.17 220); /* Primary hover más vibrante */
+    border-color: oklch(0.7 0.2 220);
+  }
+  
+  button[data-slot="button"]:hover[class*="bg-destructive"] {
+    background-color: oklch(0.65 0.28 15); /* Destructive hover más vibrante */
+    border-color: oklch(0.7 0.3 15);
+  }
+  
+  button[data-slot="button"]:hover[class*="bg-secondary"] {
+    background-color: oklch(0.3 0 0); /* Secondary hover más claro */
+    border-color: oklch(0.5 0 0);
+  }
+  
+  /* Efectos para botones outline */
+  button[data-slot="button"][class*="border"]:hover {
+    background-color: oklch(0.25 0 0);
+    border-color: oklch(0.6 0.15 220);
+    color: oklch(0.6 0.15 220);
+  }
+  
+  /* Efectos para botones ghost */
+  button[data-slot="button"][class*="hover:bg-accent"]:hover {
+    background-color: oklch(0.3 0 0);
+    transform: translateY(-1px);
+  }
+  
+  /* Efectos adicionales de brillo */
+  button[data-slot="button"]::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.5s ease;
+  }
+  
+  button[data-slot="button"]:hover::before {
+    left: 100%;
+  }
+  
+  /* Cursor pointer para elementos interactivos */
+  button,
+  [role="button"],
+  [type="button"],
+  [type="submit"],
+  [type="reset"],
+  a,
+  .cursor-pointer {
+    cursor: pointer;
+  }
+  
+  /* Cursor pointer para elementos disabled */
+  button:disabled,
+  button[disabled],
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+}
