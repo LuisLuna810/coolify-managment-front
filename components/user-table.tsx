@@ -141,15 +141,18 @@ export function UserTable({ users, onUserUpdate }: UserTableProps) {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleManageProjects(user)}
-                        className="flex items-center gap-1"
-                      >
-                        <FolderPlus className="h-3 w-3" />
-                        Projects
-                      </Button>
+                      {/* Only show Projects button for developers */}
+                      {user.role === "developer" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleManageProjects(user)}
+                          className="flex items-center gap-1"
+                        >
+                          <FolderPlus className="h-3 w-3" />
+                          Projects
+                        </Button>
+                      )}
 
                       {user.isActive ? (
                         <Button
@@ -213,6 +216,7 @@ export function UserTable({ users, onUserUpdate }: UserTableProps) {
             <ProjectAssignment
               userId={selectedUser.id}
               userEmail={selectedUser.email}
+              userRole={selectedUser.role}
               onClose={() => setShowProjectsModal(false)}
             />
           )}

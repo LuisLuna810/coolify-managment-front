@@ -1,13 +1,14 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Input } from "@/components/ui/input"
 import { toast } from "@/hooks/use-toast"
 import { projectsAPI, usersAPI } from "@/lib/api"
-import { Plus, Minus, RefreshCw } from "lucide-react"
+import { Plus, Minus, RefreshCw, Search } from "lucide-react"
 
 interface Project {
   id: string
@@ -19,14 +20,34 @@ interface Project {
 interface ProjectAssignmentProps {
   userId: string
   userEmail: string
+  userRole?: string
   onClose?: () => void
 }
 
-export function ProjectAssignment({ userId, userEmail, onClose }: ProjectAssignmentProps) {
+export function ProjectAssignment({ userId, userEmail, userRole, onClose }: ProjectAssignmentProps) {
   const [availableProjects, setAvailableProjects] = useState<Project[]>([])
   const [assignedProjects, setAssignedProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
+  const [availableSearchTerm, setAvailableSearchTerm] = useState("")
+  const [assignedSearchTerm, setAssignedSearchTerm] = useState("")
+
+  // Filtered projects based on search terms
+  const filteredAvailableProjects = useMemo(() => {
+    if (!availableSearchTerm.trim()) return availableProjects
+    return availableProjects.filter(project =>
+      project.name.toLowerCase().includes(availableSearchTerm.toLowerCase()) ||
+      project.description?.toLowerCase().includes(availableSearchTerm.toLowerCase())
+    )
+  }, [availableProjects, availableSearchTerm])
+
+  const filteredAssignedProjects = useMemo(() => {
+    if (!assignedSearchTerm.trim()) return assignedProjects
+    return assignedProjects.filter(project =>
+      project.name.toLowerCase().includes(assignedSearchTerm.toLowerCase()) ||
+      project.description?.toLowerCase().includes(assignedSearchTerm.toLowerCase())
+    )
+  }, [assignedProjects, assignedSearchTerm])
 
   const loadProjects = async () => {
     try {
@@ -100,6 +121,37 @@ export function ProjectAssignment({ userId, userEmail, onClose }: ProjectAssignm
     loadProjects()
   }, [userId])
 
+  // If user is admin, show informational message
+  if (userRole === "admin") {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-12">
+          <div className="mx-auto h-12 w-12 text-muted-foreground mb-4">
+            <svg
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
+          <h3 className="text-lg font-medium text-muted-foreground mb-2">
+            Project Assignment Not Available
+          </h3>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+            Admin users do not need project assignments as they have access to the admin panel instead of the developer dashboard.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -119,10 +171,10 @@ export function ProjectAssignment({ userId, userEmail, onClose }: ProjectAssignm
       <Tabs defaultValue="available" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="available">
-            Available Projects ({availableProjects.length})
+            Available Projects ({availableSearchTerm.trim() ? filteredAvailableProjects.length : availableProjects.length})
           </TabsTrigger>
           <TabsTrigger value="assigned">
-            Assigned Projects ({assignedProjects.length})
+            Assigned Projects ({assignedSearchTerm.trim() ? filteredAssignedProjects.length : assignedProjects.length})
           </TabsTrigger>
         </TabsList>
 
@@ -133,15 +185,27 @@ export function ProjectAssignment({ userId, userEmail, onClose }: ProjectAssignm
                 <Plus className="h-5 w-5" />
                 Available Projects to Assign
               </CardTitle>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search available projects by name..."
+                  value={availableSearchTerm}
+                  onChange={(e) => setAvailableSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
             </CardHeader>
             <CardContent>
-              {availableProjects.length === 0 ? (
+              {filteredAvailableProjects.length === 0 ? (
                 <p className="text-muted-foreground text-center py-8">
-                  No projects available to assign
+                  {availableSearchTerm.trim() 
+                    ? `No projects found matching "${availableSearchTerm}"`
+                    : "No projects available to assign"
+                  }
                 </p>
               ) : (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {availableProjects.map((project) => (
+                  {filteredAvailableProjects.map((project) => (
                     <Card key={project.id} className="relative hover:shadow-md transition-shadow h-full flex flex-col">
                       <CardHeader className="pb-3 flex-1">
                         <div className="flex items-start justify-between">
@@ -186,15 +250,27 @@ export function ProjectAssignment({ userId, userEmail, onClose }: ProjectAssignm
                 <Minus className="h-5 w-5" />
                 Assigned Projects to User
               </CardTitle>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search assigned projects by name..."
+                  value={assignedSearchTerm}
+                  onChange={(e) => setAssignedSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
             </CardHeader>
             <CardContent>
-              {assignedProjects.length === 0 ? (
+              {filteredAssignedProjects.length === 0 ? (
                 <p className="text-muted-foreground text-center py-8">
-                  User has no assigned projects
+                  {assignedSearchTerm.trim() 
+                    ? `No projects found matching "${assignedSearchTerm}"`
+                    : "User has no assigned projects"
+                  }
                 </p>
               ) : (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {assignedProjects.map((project) => (
+                  {filteredAssignedProjects.map((project) => (
                     <Card key={project.id} className="relative hover:shadow-md transition-shadow h-full flex flex-col">
                       <CardHeader className="pb-3 flex-1">
                         <div className="flex items-start justify-between">

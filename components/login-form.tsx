@@ -140,9 +140,8 @@ export function LoginForm() {
   return (
     <Card className="w-full max-w-md mx-auto mt-20 shadow-lg">
       <CardHeader className="space-y-4">
-        <CardTitle className="text-2xl text-center font-bold">Welcome Back</CardTitle>
         <p className="text-center text-muted-foreground">
-          Sign in to your account to continue
+          Sign in to your account
         </p>
         {attemptCount > 2 && (
           <Alert variant="destructive" className="border-yellow-600 bg-yellow-50 dark:bg-yellow-950/20">
