@@ -15,15 +15,12 @@ export function TokenDebugger() {
 
   const testEndpoint = async (name: string, testFn: () => Promise<any>) => {
     try {
-      console.log(`Testing ${name}...`)
       const result = await testFn()
-      console.log(`${name} success:`, result)
       setTestResults((prev: Record<string, any>) => ({
         ...prev,
         [name]: { success: true, data: result }
       }))
     } catch (error: any) {
-      console.log(`${name} failed:`, error.response?.status, error.response?.data)
       setTestResults((prev: Record<string, any>) => ({
         ...prev,
         [name]: { 

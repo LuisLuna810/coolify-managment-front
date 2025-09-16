@@ -47,7 +47,7 @@ Create a `.env.local` file in the root directory:
 
 ```env
 # Backend API Configuration
-NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_API_URL=http://localhost:3000
 
 # Authentication Settings
 NEXT_PUBLIC_JWT_EXPIRES_IN=7d

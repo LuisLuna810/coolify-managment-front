@@ -33,14 +33,12 @@ export function AuthGuard({ children }: AuthGuardProps) {
 
     // If not authenticated and trying to access protected route
     if (!isAuthenticated && !isPublicRoute) {
-      console.log("Not authenticated, redirecting to login")
       router.push(ROUTES.LOGIN)
       return
     }
 
     // If authenticated and on login page, redirect based on role
     if (isAuthenticated && pathname === ROUTES.LOGIN && user) {
-      console.log("Already authenticated, redirecting based on role")
       const redirectPath = user.role === "admin" ? ROUTES.ADMIN : ROUTES.DASHBOARD
       router.push(redirectPath)
       return
@@ -49,13 +47,11 @@ export function AuthGuard({ children }: AuthGuardProps) {
     // Role-based route protection
     if (isAuthenticated && user) {
       if (pathname.startsWith("/admin") && user.role !== "admin") {
-        console.log("Non-admin trying to access admin route")
         router.push(ROUTES.DASHBOARD)
         return
       }
       
       if (pathname.startsWith("/dashboard") && user.role !== "developer") {
-        console.log("Non-developer trying to access dashboard route")
         router.push(ROUTES.ADMIN)
         return
       }

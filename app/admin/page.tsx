@@ -32,7 +32,6 @@ export default function AdminPage() {
     try {
       await logout()
     } catch (error) {
-      console.error("Logout failed:", error)
       // Even if logout fails, we still want to try again
       setLoggingOut(false)
     }

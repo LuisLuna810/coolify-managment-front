@@ -90,7 +90,6 @@ export function ProjectCard({ project }: ProjectCardProps) {
       const status = await projectsAPI.getProjectStatus(project.id)
       setProjectStatus(status)
     } catch (error: any) {
-      console.error("Failed to fetch project status:", error)
       // Don't show error toast for status fetch to avoid spam
     } finally {
       setStatusLoading(false)

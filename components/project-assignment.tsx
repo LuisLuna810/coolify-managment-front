@@ -60,7 +60,6 @@ export function ProjectAssignment({ userId, userEmail, userRole, onClose }: Proj
       setAvailableProjects(available)
       setAssignedProjects(assigned)
     } catch (error) {
-      console.error("Error loading projects:", error)
       toast({
         title: "Error",
         description: "No se pudieron cargar los proyectos",
@@ -83,7 +82,6 @@ export function ProjectAssignment({ userId, userEmail, userRole, onClose }: Proj
       
       await loadProjects() // Reload to update the lists
     } catch (error) {
-      console.error("Error assigning project:", error)
       toast({
         title: "Error",
         description: "No se pudo asignar el proyecto",
@@ -106,7 +104,6 @@ export function ProjectAssignment({ userId, userEmail, userRole, onClose }: Proj
       
       await loadProjects() // Reload to update the lists
     } catch (error) {
-      console.error("Error unassigning project:", error)
       toast({
         title: "Error",
         description: "No se pudo desasignar el proyecto",

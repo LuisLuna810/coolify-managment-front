@@ -43,11 +43,8 @@ export function useTokenValidation(options: UseTokenValidationOptions = {}) {
     
     // Only validate if it's been more than 2 minutes since last validation
     if (timeSinceLastValidation > 2 * 60 * 1000) {
-      console.log("Throttled token validation triggered...")
       lastValidationRef.current = now
       validateToken()
-    } else {
-      console.log("Token validation throttled (too recent)")
     }
   }, [validateToken])
 
@@ -56,7 +53,6 @@ export function useTokenValidation(options: UseTokenValidationOptions = {}) {
     if (!validateOnFocus || !isAuthenticated) return
 
     const handleFocus = () => {
-      console.log("Window focused - throttled token validation...")
       throttledValidation()
     }
 
@@ -70,7 +66,6 @@ export function useTokenValidation(options: UseTokenValidationOptions = {}) {
 
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        console.log("Page became visible - throttled token validation...")
         throttledValidation()
       }
     }
@@ -91,7 +86,6 @@ export function useTokenValidation(options: UseTokenValidationOptions = {}) {
 
     // Set up periodic validation
     intervalRef.current = setInterval(() => {
-      console.log(`Periodic throttled token validation (${interval}ms interval)...`)
       throttledValidation()
     }, interval)
 

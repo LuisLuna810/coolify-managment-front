@@ -17,14 +17,12 @@ export const api = axios.create({
   },
 })
 
-// Request interceptor to add timestamp for debugging
+// Request interceptor
 api.interceptors.request.use(
   (config) => {
-    console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`)
     return config
   },
   (error) => {
-    console.error("API Request Error:", error)
     return Promise.reject(error)
   }
 )
@@ -32,26 +30,19 @@ api.interceptors.request.use(
 // Response interceptor for handling authentication errors
 api.interceptors.response.use(
   (response) => {
-    console.log(`API Response: ${response.status} ${response.config.url}`)
     return response
   },
   (error) => {
     const status = error.response?.status
     const url = error.config?.url
     
-    console.error(`API Response Error: ${status} ${url}`, error.response?.data)
-    
     // Handle 401 errors consistently for token validation
     if (status === 401) {
-      console.log("401 Unauthorized - Token may be invalid")
-      
       // Use the registered logout function if available
       if (logoutFunction) {
-        console.log("Using registered logout function for 401 error")
         logoutFunction()
       } else if (typeof window !== "undefined") {
         // Fallback to direct redirect if no logout function is registered
-        console.log("Fallback: Direct redirect to login")
         localStorage.removeItem("auth-storage")
         window.location.href = "/login"
       }

@@ -93,7 +93,6 @@ export function AdminLogsPanel() {
             const response = await logsAPI.getLogs(apiFilters)
             setLogsData(response)
         } catch (error: any) {
-            console.error("Error loading logs:", error)
             toast({
                 title: "Error",
                 description: "Failed to load logs",
@@ -109,7 +108,7 @@ export function AdminLogsPanel() {
             const data = await usersAPI.getUsers()
             setUsers(data)
         } catch (error) {
-            console.error("Error loading users:", error)
+            // Silent fail for users
         }
     }
 
@@ -118,7 +117,7 @@ export function AdminLogsPanel() {
             const data = await projectsAPI.getAllProjects()
             setProjects(data)
         } catch (error) {
-            console.error("Error loading projects:", error)
+            // Silent fail for projects
         }
     }
 

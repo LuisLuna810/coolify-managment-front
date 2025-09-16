@@ -24,7 +24,6 @@ export function LoginForm() {
 
   // Función para limpiar error con useCallback para evitar re-creaciones
   const clearError = useCallback(() => {
-    console.log("Manually clearing error") // Debug log
     setError("")
     setShowError(false)
     if (errorTimerRef.current) {
@@ -41,11 +40,6 @@ export function LoginForm() {
       }
     }
   }, [])
-
-  // Debug: Monitorear cambios en el error
-  useEffect(() => {
-    console.log("Error state changed:", error)
-  }, [error])
 
   // Alternativa: Error persistente que solo se limpia manualmente o con nuevo submit
   const [showError, setShowError] = useState(true)
@@ -99,12 +93,8 @@ export function LoginForm() {
     } catch (err: any) {
       // No limpiar los campos en caso de error
       const errorMessage = err.response?.data?.message || "Login failed. Please check your credentials and try again."
-      console.log("Setting error:", errorMessage) // Debug log
       setError(errorMessage)
       setShowError(true)
-      
-      // ELIMINAMOS EL TIMER AUTOMÁTICO - El error permanece hasta que el usuario lo cierre o haga nuevo submit
-      console.log("Error set, no auto-clear timer") // Debug log
       
       // Si es un error de credenciales, enfocar el campo de contraseña
       if (errorMessage.toLowerCase().includes("credential") || 
