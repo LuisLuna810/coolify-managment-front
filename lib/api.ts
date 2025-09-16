@@ -65,6 +65,10 @@ export const authAPI = {
     const response = await api.get("/auth/me")
     return response.data
   },
+  registerDeveloper: async (userData: { email: string; password: string; username: string }) => {
+    const response = await api.post("/auth/register-developer", userData)
+    return response.data
+  },
 }
 
 export const projectsAPI = {

@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth"
 import { usersAPI } from "@/lib/api"
 import { UserTable } from "@/components/user-table"
 import { AdminLogsPanel } from "@/components/admin-logs-panel"
+import { RegisterDeveloperModal } from "@/components/register-developer-modal"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -138,9 +139,12 @@ export default function AdminPage() {
           </TabsList>
 
           <TabsContent value="users" className="space-y-6">
-            <div>
-              <h2 className="text-xl font-semibold text-foreground mb-2">User Management</h2>
-              <p className="text-muted-foreground">Manage users, roles, and project assignments</p>
+            <div className="flex justify-between items-start">
+              <div>
+                <h2 className="text-xl font-semibold text-foreground mb-2">User Management</h2>
+                <p className="text-muted-foreground">Manage users, roles, and project assignments</p>
+              </div>
+              <RegisterDeveloperModal onSuccess={handleUserUpdate} />
             </div>
 
             <Card>
