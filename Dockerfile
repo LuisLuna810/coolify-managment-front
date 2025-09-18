@@ -23,7 +23,6 @@ COPY hooks ./hooks
 COPY lib ./lib
 COPY public ./public
 COPY styles ./styles
-COPY middleware.ts ./
 
 # Build the application (las env ya están disponibles aquí)
 RUN npm run build

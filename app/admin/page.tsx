@@ -6,6 +6,7 @@ import { usersAPI } from "@/lib/api"
 import { UserTable } from "@/components/user-table"
 import { AdminLogsPanel } from "@/components/admin-logs-panel"
 import { RegisterDeveloperModal } from "@/components/register-developer-modal"
+import { AuthGuard } from "@/components/auth-guard"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -20,6 +21,14 @@ interface User {
 }
 
 export default function AdminPage() {
+  return (
+    <AuthGuard requiredRole="admin">
+      <AdminContent />
+    </AuthGuard>
+  )
+}
+
+function AdminContent() {
   const { user, logout } = useAuth()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)

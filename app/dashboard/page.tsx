@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useAuth } from "@/hooks/use-auth"
 import { projectsAPI } from "@/lib/api"
 import { ProjectCard } from "@/components/project-card"
+import { AuthGuard } from "@/components/auth-guard"
 import { Button } from "@/components/ui/button"
 import { LogOut } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -16,7 +17,15 @@ interface Project {
 }
 
 export default function DashboardPage() {
-  const { user, logout, isAuthenticated } = useAuth()
+  return (
+    <AuthGuard requiredRole="developer">
+      <DashboardContent />
+    </AuthGuard>
+  )
+}
+
+function DashboardContent() {
+  const { user, logout } = useAuth()
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [loggingOut, setLoggingOut] = useState(false)
@@ -36,11 +45,6 @@ export default function DashboardPage() {
   }
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push("/login")
-      return
-    }
-
     const fetchProjects = async () => {
       try {
         const data = await projectsAPI.getMyProjects()
@@ -53,7 +57,7 @@ export default function DashboardPage() {
     }
 
     fetchProjects()
-  }, [isAuthenticated, router])
+  }, [])
 
   if (loading) {
     return (
