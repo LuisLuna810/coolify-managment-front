@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import * as jose from "jose"
-
-const JWT_SECRET = process.env.JWT_SECRET || "secretKey"
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -18,42 +15,9 @@ export async function middleware(request: NextRequest) {
 
   const publicRoutes = ["/login"]
   const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route))
-
+  
+  // Simple cookie check (don't validate, just check existence)
   const token = request.cookies.get("token")?.value
-  let role: string | null = null
-
-  // Validate token if present
-  if (token) {
-    try {
-      const decoded = await jose.jwtVerify(
-        token,
-        new TextEncoder().encode(JWT_SECRET)
-      )
-      role = decoded.payload.role as string
-    } catch (error) {
-      // Log error for debugging in production
-      console.log(`[MIDDLEWARE] Token validation failed for ${pathname}:`, error instanceof Error ? error.message : 'Unknown error')
-      
-      // Token is invalid, clear it and redirect to login
-      const response = NextResponse.redirect(new URL("/login", request.url))
-      response.cookies.delete("token")
-      return response
-    }
-  }
-
-  // Handle root path - redirect based on authentication
-  if (pathname === "/") {
-    if (token && role) {
-      // User is authenticated, redirect to appropriate dashboard
-      const redirectPath = role === "admin" ? "/admin" : "/dashboard"
-      console.log(`[MIDDLEWARE] Root access with token, redirecting to ${redirectPath}`)
-      return NextResponse.redirect(new URL(redirectPath, request.url))
-    } else {
-      // No token, redirect to login
-      console.log(`[MIDDLEWARE] Root access without token, redirecting to login`)
-      return NextResponse.redirect(new URL("/login", request.url))
-    }
-  }
 
   // Redirect to login if no token and accessing protected route
   if (!token && !isPublicRoute) {
@@ -61,28 +25,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url))
   }
 
-  // Let client-side handle redirect from login page to avoid conflicts
-  // Comment out the automatic redirect to prevent 307 errors
-  /*
-  if (token && pathname === "/login") {
-    const redirectPath = role === "admin" ? "/admin" : "/dashboard"
-    return NextResponse.redirect(new URL(redirectPath, request.url))
-  }
-  */
-
-  // Role-based access control
-  if (token && role) {
-    // Admin trying to access developer routes
-    if (pathname.startsWith("/dashboard") && role !== "developer") {
-      return NextResponse.redirect(new URL("/admin", request.url))
-    }
-    
-    // Developer trying to access admin routes
-    if (pathname.startsWith("/admin") && role !== "admin") {
-      return NextResponse.redirect(new URL("/dashboard", request.url))
-    }
-  }
-
+  // Let the client-side handle all authentication logic
   return NextResponse.next()
 }
 
