@@ -4,7 +4,7 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Declaramos ARGs que queremos pasar desde docker-compose
-ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_API_URL=http://localhost:3000
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
 # Copy package files
@@ -74,6 +74,10 @@ RUN apk add --no-cache curl
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nextjs -u 1001
+
+# ARG con valor por defecto
+ARG NEXT_PUBLIC_API_URL=http://localhost:3000
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
 # Copy package files and install only production dependencies
 COPY package*.json ./

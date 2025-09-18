@@ -32,8 +32,20 @@ export function LogsModal({ projectId, projectName, isOpen, onClose }: LogsModal
     setLoading(true)
     try {
       const data = await logsAPI.getServerLogs(projectId, lines)
-      const logString = data.logs || ""
-      const logArray = logString.split("\n").filter((line: string) => line.trim() !== "")
+      
+      // Handle both string and array responses from backend
+      let logArray: string[] = []
+      if (Array.isArray(data.logs)) {
+        // If logs is already an array, use it directly
+        logArray = data.logs.filter((line: string) => line && line.trim() !== "")
+      } else if (typeof data.logs === 'string') {
+        // If logs is a string, split it into lines
+        logArray = data.logs.split("\n").filter((line: string) => line.trim() !== "")
+      } else {
+        // If logs is null, undefined, or other type, default to empty array
+        logArray = []
+      }
+      
       setLogs(logArray)
       setLastUpdated(new Date())
     } catch (err: any) {
