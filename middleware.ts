@@ -43,11 +43,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url))
   }
 
-  // Redirect authenticated users away from login page
+  // Let client-side handle redirect from login page to avoid conflicts
+  // Comment out the automatic redirect to prevent 307 errors
+  /*
   if (token && pathname === "/login") {
     const redirectPath = role === "admin" ? "/admin" : "/dashboard"
     return NextResponse.redirect(new URL(redirectPath, request.url))
   }
+  */
 
   // Role-based access control
   if (token && role) {

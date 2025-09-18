@@ -16,6 +16,9 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: [],
   },
+  // Prevent automatic redirects that might conflict with middleware
+  skipMiddlewareUrlNormalize: true,
+  skipTrailingSlashRedirect: true,
 }
 
 export default nextConfig
