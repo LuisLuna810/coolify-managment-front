@@ -31,6 +31,9 @@ export async function middleware(request: NextRequest) {
       )
       role = decoded.payload.role as string
     } catch (error) {
+      // Log error for debugging in production
+      console.log(`[MIDDLEWARE] Token validation failed for ${pathname}:`, error instanceof Error ? error.message : 'Unknown error')
+      
       // Token is invalid, clear it and redirect to login
       const response = NextResponse.redirect(new URL("/login", request.url))
       response.cookies.delete("token")
@@ -40,6 +43,7 @@ export async function middleware(request: NextRequest) {
 
   // Redirect to login if no token and accessing protected route
   if (!token && !isPublicRoute) {
+    console.log(`[MIDDLEWARE] No token, redirecting ${pathname} to login`)
     return NextResponse.redirect(new URL("/login", request.url))
   }
 

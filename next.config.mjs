@@ -19,6 +19,31 @@ const nextConfig = {
   // Prevent automatic redirects that might conflict with middleware
   skipMiddlewareUrlNormalize: true,
   skipTrailingSlashRedirect: true,
+  // Ensure proper handling of rewrites and redirects in production
+  async rewrites() {
+    return []
+  },
+  async redirects() {
+    return []
+  },
+  // Headers configuration for CORS and security
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+        ],
+      },
+    ]
+  },
 }
 
 export default nextConfig
