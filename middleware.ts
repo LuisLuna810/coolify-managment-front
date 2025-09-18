@@ -41,6 +41,20 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Handle root path - redirect based on authentication
+  if (pathname === "/") {
+    if (token && role) {
+      // User is authenticated, redirect to appropriate dashboard
+      const redirectPath = role === "admin" ? "/admin" : "/dashboard"
+      console.log(`[MIDDLEWARE] Root access with token, redirecting to ${redirectPath}`)
+      return NextResponse.redirect(new URL(redirectPath, request.url))
+    } else {
+      // No token, redirect to login
+      console.log(`[MIDDLEWARE] Root access without token, redirecting to login`)
+      return NextResponse.redirect(new URL("/login", request.url))
+    }
+  }
+
   // Redirect to login if no token and accessing protected route
   if (!token && !isPublicRoute) {
     console.log(`[MIDDLEWARE] No token, redirecting ${pathname} to login`)

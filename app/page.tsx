@@ -1,24 +1,12 @@
-"use client"
-
-import { useEffect } from "react"
-import { useAuth } from "@/hooks/use-auth"
-
 export default function HomePage() {
-  const { isAuthenticated, user, redirectBasedOnRole } = useAuth()
-
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      redirectBasedOnRole(user.role)
-    } else {
-      window.location.href = "/login"
-    }
-  }, [isAuthenticated, user, redirectBasedOnRole])
-
+  // El middleware se encarga de todos los redirects
+  // Esta página solo muestra loading mientras redirige
   return (
     <div className="flex items-center justify-center min-h-screen">
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-foreground">Loading...</h1>
-        <p className="text-muted-foreground">Redirecting to your dashboard</p>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+        <h1 className="text-2xl font-bold text-foreground mt-4">Redirecting...</h1>
+        <p className="text-muted-foreground mt-2">Please wait while we redirect you...</p>
       </div>
     </div>
   )
