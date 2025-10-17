@@ -80,8 +80,12 @@ export const projectsAPI = {
     const response = await api.get("/projects")
     return response.data
   },
-  getAvailableProjects: async () => {
-    const response = await api.get("/projects/available")
+  syncProjects: async () => {
+    const response = await api.get("/projects/sync")
+    return response.data
+  },
+  getAvailableProjects: async (userId: string) => {
+    const response = await api.get(`/projects/available/${userId}`)
     return response.data
   },
   getAssignedProjects: async (userId: string) => {

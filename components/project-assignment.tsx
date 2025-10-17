@@ -49,28 +49,40 @@ export function ProjectAssignment({ userId, userEmail, userRole, onClose }: Proj
     )
   }, [assignedProjects, assignedSearchTerm])
 
-  const loadProjects = async () => {
+  const loadProjects = async (silent = false) => {
     try {
       setRefreshing(true)
       const [available, assigned] = await Promise.all([
-        projectsAPI.getAvailableProjects(),
+        projectsAPI.getAvailableProjects(userId),
         projectsAPI.getAssignedProjects(userId)
       ])
       
       setAvailableProjects(available)
       setAssignedProjects(assigned)
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los proyectos",
-        variant: "destructive",
-      })
+      // Solo mostrar error si no es una carga silenciosa en segundo plano
+      if (!silent) {
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar los proyectos",
+          variant: "destructive",
+        })
+      }
     } finally {
       setRefreshing(false)
     }
   }
 
   const assignProject = async (projectId: string) => {
+    // Encontrar el proyecto en la lista de disponibles
+    const projectToAssign = availableProjects.find(p => p.id === projectId)
+    
+    if (!projectToAssign) return
+
+    // Actualización optimista de la UI (instantánea)
+    setAvailableProjects(prev => prev.filter(p => p.id !== projectId))
+    setAssignedProjects(prev => [...prev, projectToAssign])
+
     try {
       setLoading(true)
       await usersAPI.assignProject(userId, projectId)
@@ -80,19 +92,42 @@ export function ProjectAssignment({ userId, userEmail, userRole, onClose }: Proj
         description: "El proyecto se asignó correctamente al usuario",
       })
       
-      await loadProjects() // Reload to update the lists
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo asignar el proyecto",
-        variant: "destructive",
-      })
+      // Recargar en segundo plano para asegurar sincronización (silencioso)
+      loadProjects(true)
+    } catch (error: any) {
+      // Revertir cambios optimistas en caso de error
+      setAvailableProjects(prev => [...prev, projectToAssign])
+      setAssignedProjects(prev => prev.filter(p => p.id !== projectId))
+
+      // Detectar error 409 (conflicto - proyecto ya asignado)
+      if (error?.response?.status === 409) {
+        toast({
+          title: "Proyecto ya asignado",
+          description: "Este proyecto ya está asignado a este usuario",
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: "No se pudo asignar el proyecto",
+          variant: "destructive",
+        })
+      }
     } finally {
       setLoading(false)
     }
   }
 
   const unassignProject = async (projectId: string) => {
+    // Encontrar el proyecto en la lista de asignados
+    const projectToUnassign = assignedProjects.find(p => p.id === projectId)
+    
+    if (!projectToUnassign) return
+
+    // Actualización optimista de la UI (instantánea)
+    setAssignedProjects(prev => prev.filter(p => p.id !== projectId))
+    setAvailableProjects(prev => [...prev, projectToUnassign])
+
     try {
       setLoading(true)
       await usersAPI.unassignProject(userId, projectId)
@@ -102,8 +137,13 @@ export function ProjectAssignment({ userId, userEmail, userRole, onClose }: Proj
         description: "El proyecto se desasignó correctamente del usuario",
       })
       
-      await loadProjects() // Reload to update the lists
+      // Recargar en segundo plano para asegurar sincronización (silencioso)
+      loadProjects(true)
     } catch (error) {
+      // Revertir cambios optimistas en caso de error
+      setAssignedProjects(prev => [...prev, projectToUnassign])
+      setAvailableProjects(prev => prev.filter(p => p.id !== projectId))
+
       toast({
         title: "Error",
         description: "No se pudo desasignar el proyecto",
@@ -156,7 +196,7 @@ export function ProjectAssignment({ userId, userEmail, userRole, onClose }: Proj
           <Button
             variant="outline"
             size="sm"
-            onClick={loadProjects}
+            onClick={() => loadProjects()}
             disabled={refreshing}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
