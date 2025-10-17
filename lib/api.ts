@@ -178,10 +178,14 @@ export const logsAPI = {
     const response = await api.get(`/logs/project/${projectId}`)
     return response.data
   },
-  getServerLogs: async (projectId: string, lines = 100) => {
+  getProjectContainers: async (projectId: string) => {
+    const response = await api.get(`/actions/${projectId}/containers`)
+    return response.data
+  },
+  getServerLogs: async (projectId: string, lines = 100, container?: string) => {
     const response = await api.get(`/actions/${projectId}/logs`,
       {
-        params: { lines },
+        params: { lines, container },
       }
     )
     return response.data

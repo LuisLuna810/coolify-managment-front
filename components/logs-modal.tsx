@@ -7,9 +7,17 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { logsAPI } from "@/lib/api"
-import { Loader2, RefreshCw, Download, Copy, Search, CheckCircle2 } from "lucide-react"
+import { Loader2, RefreshCw, Download, Copy, Search, CheckCircle2, Container } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+
+interface Container {
+  id: string
+  name: string
+  type: string
+  status: string
+}
 
 interface LogsModalProps {
   projectId: string
@@ -20,18 +28,44 @@ interface LogsModalProps {
 
 export function LogsModal({ projectId, projectName, isOpen, onClose }: LogsModalProps) {
   const [logs, setLogs] = useState<string[]>([])
+  const [containers, setContainers] = useState<Container[]>([])
+  const [selectedContainer, setSelectedContainer] = useState<string | undefined>(undefined)
   const [lines, setLines] = useState(100)
   const [loading, setLoading] = useState(false)
+  const [containersLoading, setContainersLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied'>('idle')
   const [downloadStatus, setDownloadStatus] = useState<'idle' | 'downloaded'>('idle')
   const { toast } = useToast()
 
+  const fetchContainers = async () => {
+    setContainersLoading(true)
+    try {
+      const data = await logsAPI.getProjectContainers(projectId)
+      if (data.containers && data.containers.length > 0) {
+        setContainers(data.containers)
+        // Seleccionar el primer contenedor por defecto
+        if (!selectedContainer) {
+          setSelectedContainer(data.containers[0].id)
+        }
+      } else {
+        // Si no hay contenedores, dejar selectedContainer como undefined (logs generales)
+        setContainers([])
+      }
+    } catch (err: any) {
+      // Si falla, continuar con logs generales
+      setContainers([])
+      console.error("Error fetching containers:", err)
+    } finally {
+      setContainersLoading(false)
+    }
+  }
+
   const fetchLogs = async () => {
     setLoading(true)
     try {
-      const data = await logsAPI.getServerLogs(projectId, lines)
+      const data = await logsAPI.getServerLogs(projectId, lines, selectedContainer)
       
       // Handle both string and array responses from backend
       let logArray: string[] = []
@@ -95,9 +129,15 @@ export function LogsModal({ projectId, projectName, isOpen, onClose }: LogsModal
 
   useEffect(() => {
     if (isOpen) {
+      fetchContainers()
+    }
+  }, [isOpen])
+
+  useEffect(() => {
+    if (isOpen && (containers.length > 0 || !containersLoading)) {
       fetchLogs()
     }
-  }, [isOpen, lines])
+  }, [isOpen, lines, selectedContainer, containersLoading])
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -115,6 +155,35 @@ export function LogsModal({ projectId, projectName, isOpen, onClose }: LogsModal
             View and manage your project logs. You can filter, copy or download logs for analysis.
           </DialogDescription>
         </DialogHeader>
+
+        {/* Selector de contenedores */}
+        {containers.length > 1 && (
+          <div className="border-b pb-4">
+            <Label className="text-sm font-medium mb-2 block">
+              <Container className="inline h-4 w-4 mr-1" />
+              Container
+            </Label>
+            <Tabs value={selectedContainer} onValueChange={setSelectedContainer} className="w-full">
+              <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${Math.min(containers.length, 4)}, 1fr)` }}>
+                {containers.map((container) => (
+                  <TabsTrigger key={container.id} value={container.id} className="text-xs">
+                    <span className="truncate">{container.name}</span>
+                    <Badge 
+                      variant="outline" 
+                      className={`ml-1 text-[10px] px-1 ${
+                        container.status?.toLowerCase().includes('running') 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      {container.type}
+                    </Badge>
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          </div>
+        )}
 
         {/* Panel de controles */}
         <div className="flex flex-col gap-4 border-b pb-4">
