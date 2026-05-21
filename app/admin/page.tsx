@@ -1,18 +1,18 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
+import { useEffect, useState } from "react"
 import { useAuth } from "@/hooks/use-auth"
 import { usersAPI, projectsAPI } from "@/lib/api"
 import { UserTable } from "@/components/user-table"
 import { AdminLogsPanel } from "@/components/admin-logs-panel"
 import { RegisterDeveloperModal } from "@/components/register-developer-modal"
 import { AuthGuard } from "@/components/auth-guard"
-import { ProjectCard } from "@/components/project-card"
+import { ProjectsGrid } from "@/components/projects-grid"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Input } from "@/components/ui/input"
-import { LogOut, Users, FileText, FolderGit2, RefreshCw, Search } from "lucide-react"
+import { LogOut, Users, FileText, FolderGit2, RefreshCw, BookOpen } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 interface User {
   id: string
@@ -38,6 +38,7 @@ export default function AdminPage() {
 }
 
 function AdminContent() {
+  const router = useRouter()
   const { user, logout } = useAuth()
   const [users, setUsers] = useState<User[]>([])
   const [projects, setProjects] = useState<Project[]>([])
@@ -47,7 +48,6 @@ function AdminContent() {
   const [loggingOut, setLoggingOut] = useState(false)
   const [error, setError] = useState("")
   const [activeTab, setActiveTab] = useState("users")
-  const [projectSearchTerm, setProjectSearchTerm] = useState("")
 
   const handleLogout = async () => {
     if (loggingOut) return // Prevent multiple clicks
@@ -72,14 +72,6 @@ function AdminContent() {
     }
   }, [activeTab, projectsLoaded])
 
-  // Filtrar proyectos por término de búsqueda
-  const filteredProjects = useMemo(() => {
-    if (!projectSearchTerm.trim()) return projects
-    return projects.filter(project =>
-      project.name.toLowerCase().includes(projectSearchTerm.toLowerCase()) ||
-      project.description?.toLowerCase().includes(projectSearchTerm.toLowerCase())
-    )
-  }, [projects, projectSearchTerm])
 
   const fetchUsers = async () => {
     try {
@@ -174,10 +166,21 @@ function AdminContent() {
             <div>
               <h1 className="text-2xl font-bold text-foreground">Admin Dashboard</h1>
             </div>
-            <Button variant="outline" onClick={handleLogout} disabled={loggingOut} className="flex items-center gap-2 bg-transparent">
-              <LogOut className="h-4 w-4" />
-              {loggingOut ? "Logging out..." : "Logout"}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => router.push("/docs")}
+                className="flex items-center gap-2"
+                title="Cómo leer las cards y estados"
+              >
+                <BookOpen className="h-4 w-4" />
+                Docs
+              </Button>
+              <Button variant="outline" onClick={handleLogout} disabled={loggingOut} className="flex items-center gap-2 bg-transparent">
+                <LogOut className="h-4 w-4" />
+                {loggingOut ? "Logging out..." : "Logout"}
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -240,38 +243,7 @@ function AdminContent() {
               </Button>
             </div>
 
-            {/* Barra de búsqueda */}
-            {projects.length > 0 && (
-              <div>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
-                  <Input
-                    type="text"
-                    value={projectSearchTerm}
-                    onChange={(e) => setProjectSearchTerm(e.target.value)}
-                    placeholder="Search projects by name or description..."
-                    className="pl-10 w-full"
-                  />
-                </div>
-                {projectSearchTerm && (
-                  <div className="mt-2 text-sm text-muted-foreground">
-                    Showing {filteredProjects.length} of {projects.length} projects
-                  </div>
-                )}
-              </div>
-            )}
-
-            {projectsLoading && projects.length === 0 ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="text-center space-y-4">
-                  <div className="relative inline-block">
-                    <div className="w-16 h-16 border-4 border-primary/20 rounded-full"></div>
-                    <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
-                  </div>
-                  <p className="text-muted-foreground">Loading projects...</p>
-                </div>
-              </div>
-            ) : projects.length === 0 ? (
+            {projects.length === 0 && !projectsLoading ? (
               <Card>
                 <CardContent className="py-12">
                   <div className="text-center">
@@ -289,32 +261,12 @@ function AdminContent() {
                   </div>
                 </CardContent>
               </Card>
-            ) : filteredProjects.length === 0 ? (
-              <Card>
-                <CardContent className="py-12">
-                  <div className="text-center">
-                    <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium text-foreground mb-2">
-                      No projects found
-                    </h3>
-                    <p className="text-muted-foreground mb-4">
-                      No projects match "{projectSearchTerm}"
-                    </p>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setProjectSearchTerm("")}
-                    >
-                      Clear search
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredProjects.map((project) => (
-                  <ProjectCard key={project.id} project={project} />
-                ))}
-              </div>
+              <ProjectsGrid
+                projects={projects}
+                loading={projectsLoading && projects.length === 0}
+                emptyMessage="Sync with Coolify to import projects."
+              />
             )}
           </TabsContent>
 

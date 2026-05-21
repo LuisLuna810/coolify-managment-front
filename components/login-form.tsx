@@ -215,18 +215,18 @@ export function LoginForm() {
             )}
           </div>
 
-          <Button 
-            type="submit" 
-            className="w-full h-11 font-medium" 
-            disabled={isLoading || !email.trim() || !password.trim()}
+          <Button
+            type="submit"
+            className="w-full h-11 font-medium"
+            disabled={isLoading}
           >
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing in...
+                Signing in…
               </>
             ) : (
-              "Sign In"
+              "Sign in"
             )}
           </Button>
 

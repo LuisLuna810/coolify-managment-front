@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react"
 import { useAuth } from "@/hooks/use-auth"
 import { projectsAPI } from "@/lib/api"
-import { ProjectCard } from "@/components/project-card"
+import { ProjectsGrid } from "@/components/projects-grid"
 import { AuthGuard } from "@/components/auth-guard"
 import { Button } from "@/components/ui/button"
-import { LogOut } from "lucide-react"
+import { LogOut, BookOpen } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 interface Project {
@@ -123,15 +123,26 @@ function DashboardContent() {
                 Welcome back, {user?.username}
               </p>
             </div>
-            <Button
-              variant="outline"
-              onClick={handleLogout}
-              disabled={loggingOut}
-              className="flex items-center gap-2 bg-transparent"
-            >
-              <LogOut className="h-4 w-4" />
-              {loggingOut ? "Logging out..." : "Logout"}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => router.push("/docs")}
+                className="flex items-center gap-2"
+                title="Cómo leer las cards y estados"
+              >
+                <BookOpen className="h-4 w-4" />
+                Docs
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleLogout}
+                disabled={loggingOut}
+                className="flex items-center gap-2 bg-transparent"
+              >
+                <LogOut className="h-4 w-4" />
+                {loggingOut ? "Logging out..." : "Logout"}
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -153,22 +164,12 @@ function DashboardContent() {
           </div>
         )}
 
-        {projects.length === 0 ? (
-          <div className="text-center py-12">
-            <h3 className="text-lg font-medium text-foreground mb-2">
-              No projects assigned
-            </h3>
-            <p className="text-muted-foreground">
-              Contact your administrator to get projects assigned to you.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
-            ))}
-          </div>
-        )}
+        <ProjectsGrid
+          projects={projects}
+          emptyMessage="Contact your administrator to get projects assigned to you."
+        />
+        {/* La condición loading=false la maneja DashboardContent arriba: si
+            llegamos hasta aquí, projects ya está cargado (puede estar vacío). */}
       </main>
     </div>
   )

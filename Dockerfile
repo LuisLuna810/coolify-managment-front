@@ -40,7 +40,7 @@ ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
 # Copy package files first (for better caching)
-COPY package.json package-lock.json pnpm-lock.yaml ./
+COPY package*.json ./
 
 # Install all dependencies (including dev dependencies)
 RUN npm ci
