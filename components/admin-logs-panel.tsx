@@ -23,11 +23,12 @@ interface ActionLog {
     id: string
     action: string
     timestamp: string
+    // Si el usuario fue eliminado, la FK queda en NULL (ON DELETE SET NULL).
     user: {
         id: string
         username: string
         email: string
-    }
+    } | null
     project: {
         id: string
         name: string
@@ -175,7 +176,7 @@ export function AdminLogsPanel() {
             const csv = [
                 'Timestamp,Username,Action,Project,User Email',
                 ...allLogsResponse.logs.map((log: ActionLog) =>
-                    `${log.timestamp},${log.user.username},${log.action},${log.project.name},${log.user.email}`
+                    `${log.timestamp},${log.user?.username ?? ""},${log.action},${log.project?.name ?? ""},${log.user?.email ?? ""}`
                 )
             ].join('\n')
 
@@ -400,8 +401,10 @@ export function AdminLogsPanel() {
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="space-y-1">
-                                                        <div className="font-medium">{log.user.username}</div>
-                                                        <div className="text-sm text-muted-foreground">{log.user.email}</div>
+                                                        <div className="font-medium">{log.user?.username ?? "—"}</div>
+                                                        <div className="text-sm text-muted-foreground">
+                                                            {log.user?.email ?? "Usuario eliminado"}
+                                                        </div>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>

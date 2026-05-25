@@ -65,7 +65,12 @@ export const authAPI = {
     const response = await api.get("/auth/me")
     return response.data
   },
-  registerDeveloper: async (userData: { email: string; password: string; username: string }) => {
+  registerDeveloper: async (userData: {
+    email: string
+    password: string
+    username: string
+    role?: "admin" | "developer"
+  }) => {
     const response = await api.post("/auth/register-developer", userData)
     return response.data
   },
@@ -143,6 +148,17 @@ export const usersAPI = {
   },
   deleteUser: async (userId: string) => {
     const response = await api.delete(`/users/${userId}`)
+    return response.data
+  },
+  changePassword: async (userId: string, password: string) => {
+    const response = await api.patch(`/users/${userId}/password`, { password })
+    return response.data
+  },
+  updateUser: async (
+    userId: string,
+    data: Partial<{ role: "admin" | "developer"; username: string; isActive: boolean }>,
+  ) => {
+    const response = await api.patch(`/users/${userId}`, data)
     return response.data
   },
   assignProject: async (

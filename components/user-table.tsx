@@ -7,10 +7,23 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Trash2, UserX, UserCheck, Settings, FolderPlus } from "lucide-react"
+import { Trash2, UserX, UserCheck, Settings, FolderPlus, KeyRound, Loader2 } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { usersAPI } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
+import { useAuth } from "@/hooks/use-auth"
 import { ProjectAssignment } from "@/components/project-assignment"
+import { ChangePasswordModal } from "@/components/change-password-modal"
 
 interface User {
   id: string
@@ -28,8 +41,41 @@ interface UserTableProps {
 export function UserTable({ users, onUserUpdate }: UserTableProps) {
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [showProjectsModal, setShowProjectsModal] = useState(false)
+  const [passwordTarget, setPasswordTarget] = useState<User | null>(null)
   const [loading, setLoading] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<User | null>(null)
+  const [roleChange, setRoleChange] = useState<{ user: User; nextRole: "admin" | "developer" } | null>(null)
   const { toast } = useToast()
+  const { user: currentUser } = useAuth()
+
+  const requestRoleChange = (target: User, nextRole: "admin" | "developer") => {
+    if (target.role === nextRole) return
+    setRoleChange({ user: target, nextRole })
+  }
+
+  const confirmRoleChange = async () => {
+    if (!roleChange) return
+    const { user: target, nextRole } = roleChange
+
+    setLoading(`role-${target.id}`)
+    try {
+      await usersAPI.updateUser(target.id, { role: nextRole })
+      toast({
+        title: "Rol actualizado",
+        description: `${target.username} ahora es ${nextRole}.`,
+      })
+      setRoleChange(null)
+      onUserUpdate()
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "No se pudo cambiar el rol",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(null)
+    }
+  }
 
   const handleDeactivateUser = async (userId: string) => {
     setLoading(`deactivate-${userId}`)
@@ -71,18 +117,17 @@ export function UserTable({ users, onUserUpdate }: UserTableProps) {
     }
   }
 
-  const handleDeleteUser = async (userId: string) => {
-    if (!confirm("Are you sure you want to delete this user? This action cannot be undone.")) {
-      return
-    }
+  const confirmDeleteUser = async () => {
+    if (!deleteTarget) return
 
-    setLoading(`delete-${userId}`)
+    setLoading(`delete-${deleteTarget.id}`)
     try {
-      await usersAPI.deleteUser(userId)
+      await usersAPI.deleteUser(deleteTarget.id)
       toast({
         title: "Success",
         description: "User deleted successfully",
       })
+      setDeleteTarget(null)
       onUserUpdate()
     } catch (error: any) {
       toast({
@@ -134,7 +179,32 @@ export function UserTable({ users, onUserUpdate }: UserTableProps) {
                   <TableCell className="font-medium">{user.username}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
-                    <Badge className={getRoleColor(user.role)}>{user.role}</Badge>
+                    {currentUser?.id === user.id ? (
+                      <Badge className={getRoleColor(user.role)} title="No podés cambiar tu propio rol">
+                        {user.role}
+                      </Badge>
+                    ) : user.role === "admin" ? (
+                      <Badge
+                        className={getRoleColor(user.role)}
+                        title="No se puede cambiar el rol de un admin"
+                      >
+                        {user.role}
+                      </Badge>
+                    ) : (
+                      <Select
+                        value={user.role}
+                        onValueChange={(v) => requestRoleChange(user, v as "admin" | "developer")}
+                        disabled={loading === `role-${user.id}`}
+                      >
+                        <SelectTrigger className="h-8 w-[130px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="developer">developer</SelectItem>
+                          <SelectItem value="admin">admin</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Badge className={getStatusColor(user.isActive)}>{user.isActive ? "Active" : "Inactive"}</Badge>
@@ -153,6 +223,17 @@ export function UserTable({ users, onUserUpdate }: UserTableProps) {
                           Projects
                         </Button>
                       )}
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPasswordTarget(user)}
+                        className="flex items-center gap-1"
+                        title="Cambiar contraseña"
+                      >
+                        <KeyRound className="h-3 w-3" />
+                        Password
+                      </Button>
 
                       {user.isActive ? (
                         <Button
@@ -181,7 +262,7 @@ export function UserTable({ users, onUserUpdate }: UserTableProps) {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleDeleteUser(user.id)}
+                        onClick={() => setDeleteTarget(user)}
                         disabled={loading === `delete-${user.id}`}
                         className="flex items-center gap-1 text-destructive hover:text-destructive"
                       >
@@ -222,6 +303,96 @@ export function UserTable({ users, onUserUpdate }: UserTableProps) {
           )}
         </DialogContent>
       </Dialog>
+
+      <ChangePasswordModal
+        open={passwordTarget !== null}
+        onOpenChange={(next) => {
+          if (!next) setPasswordTarget(null)
+        }}
+        user={passwordTarget}
+      />
+
+      <AlertDialog
+        open={deleteTarget !== null}
+        onOpenChange={(next) => {
+          if (!next && loading !== `delete-${deleteTarget?.id}`) setDeleteTarget(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar usuario</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget ? (
+                <>
+                  Vas a eliminar a <span className="font-semibold">{deleteTarget.username}</span> ({deleteTarget.email}).
+                  Esta acción no se puede deshacer y sus asignaciones a proyectos se borrarán. Los logs quedan como huérfanos para auditoría.
+                </>
+              ) : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loading === `delete-${deleteTarget?.id}`}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault()
+                confirmDeleteUser()
+              }}
+              disabled={loading === `delete-${deleteTarget?.id}`}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {loading === `delete-${deleteTarget?.id}` ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Eliminando...
+                </>
+              ) : (
+                "Eliminar"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={roleChange !== null}
+        onOpenChange={(next) => {
+          if (!next && loading !== `role-${roleChange?.user.id}`) setRoleChange(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cambiar rol</AlertDialogTitle>
+            <AlertDialogDescription>
+              {roleChange ? (
+                <>
+                  Vas a cambiar el rol de <span className="font-semibold">{roleChange.user.username}</span> de{" "}
+                  <span className="font-semibold">{roleChange.user.role}</span> a{" "}
+                  <span className="font-semibold">{roleChange.nextRole}</span>. El usuario tendrá que volver a iniciar sesión.
+                </>
+              ) : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loading === `role-${roleChange?.user.id}`}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault()
+                confirmRoleChange()
+              }}
+              disabled={loading === `role-${roleChange?.user.id}`}
+            >
+              {loading === `role-${roleChange?.user.id}` ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Aplicando...
+                </>
+              ) : (
+                "Confirmar"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }
