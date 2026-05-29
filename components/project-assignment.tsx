@@ -1,16 +1,21 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, type ReactNode } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { toast } from "@/hooks/use-toast"
+import { cn } from "@/lib/utils"
 import { projectsAPI, usersAPI } from "@/lib/api"
-import { Plus, Minus, RefreshCw, Search } from "lucide-react"
+import { Plus, Minus, RefreshCw, Search, LayoutGrid, List } from "lucide-react"
+
+type ViewMode = "grid" | "list"
+const VIEW_STORAGE_KEY = "project-assignment:view"
 
 interface ProjectPermissions {
   canStart: boolean
@@ -74,6 +79,91 @@ const PERMISSION_FIELDS_ARGO: PermissionField[] = [
 const getPermissionFields = (source?: Project["source"]): PermissionField[] =>
   source === "argocd" ? PERMISSION_FIELDS_ARGO : PERMISSION_FIELDS_COOLIFY
 
+// Chip clickeable para cada permiso. Le da un borde + fondo visibles al área de
+// click (antes era solo un checkbox casi invisible sobre fondo oscuro) y marca
+// el estado checked con el color primario.
+function PermissionToggle({
+  label,
+  checked,
+  onToggle,
+}: {
+  label: string
+  checked: boolean
+  onToggle: () => void
+}) {
+  return (
+    <label
+      className={cn(
+        "flex items-center gap-2 text-sm cursor-pointer select-none rounded-md border px-2.5 py-1.5 transition-colors min-w-0",
+        checked
+          ? "border-primary/70 bg-primary/10 text-foreground"
+          : "border-border bg-muted/20 text-muted-foreground hover:border-foreground/40 hover:bg-muted/50 hover:text-foreground",
+      )}
+    >
+      <Checkbox
+        checked={checked}
+        onCheckedChange={onToggle}
+        aria-label={label}
+        className="border-muted-foreground/60"
+      />
+      <span className="truncate">{label}</span>
+    </label>
+  )
+}
+
+// Fila compacta para la vista de lista. Reusa la misma lógica de permisos que
+// las cards (mismos fields/handlers); sólo cambia el layout. `action` es el
+// botón Assign/Remove que inyecta cada pestaña.
+function ProjectListRow({
+  project,
+  perms,
+  fields,
+  onTogglePerm,
+  action,
+}: {
+  project: Project
+  perms: ProjectPermissions
+  fields: PermissionField[]
+  onTogglePerm: (key: keyof ProjectPermissions) => void
+  action: ReactNode
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-md border p-3 hover:bg-muted/40 transition-colors min-w-0">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="font-medium truncate" title={project.name}>
+            {project.name}
+          </span>
+          {project.source === "argocd" && (
+            <span
+              className="shrink-0 inline-flex items-center rounded-sm border border-sky-500/30 bg-sky-500/10 px-1.5 py-0.5 text-[10px] font-medium text-sky-700 dark:text-sky-400"
+              title="Proyecto gestionado por ArgoCD — los permisos disponibles son Sync y Logs (Refresh siempre disponible al asignar)."
+            >
+              ArgoCD
+            </span>
+          )}
+        </div>
+        {project.description && (
+          <p className="text-xs text-muted-foreground truncate" title={project.description}>
+            {project.description}
+          </p>
+        )}
+      </div>
+      <div className="flex flex-wrap items-center justify-end gap-2 shrink-0">
+        {fields.map(({ key, label }) => (
+          <PermissionToggle
+            key={key}
+            label={label}
+            checked={perms[key]}
+            onToggle={() => onTogglePerm(key)}
+          />
+        ))}
+      </div>
+      <div className="shrink-0">{action}</div>
+    </div>
+  )
+}
+
 interface ProjectAssignmentProps {
   userId: string
   userEmail: string
@@ -90,6 +180,18 @@ export function ProjectAssignment({ userId, userEmail, userRole, onClose }: Proj
   const [assignedSearchTerm, setAssignedSearchTerm] = useState("")
   // Permisos pendientes para proyectos que aún no se asignaron (clave: projectId)
   const [pendingPerms, setPendingPerms] = useState<Record<string, ProjectPermissions>>({})
+  // Vista grid (cards, default) o lista. Compartida por ambas pestañas y
+  // persistida en localStorage para recordar la preferencia del admin.
+  const [viewMode, setViewMode] = useState<ViewMode>("grid")
+
+  useEffect(() => {
+    const saved = typeof window !== "undefined" ? localStorage.getItem(VIEW_STORAGE_KEY) : null
+    if (saved === "grid" || saved === "list") setViewMode(saved)
+  }, [])
+
+  useEffect(() => {
+    if (typeof window !== "undefined") localStorage.setItem(VIEW_STORAGE_KEY, viewMode)
+  }, [viewMode])
 
   const getPendingPerms = (projectId: string): ProjectPermissions =>
     pendingPerms[projectId] || DEFAULT_PENDING_PERMS
@@ -307,6 +409,25 @@ export function ProjectAssignment({ userId, userEmail, userRole, onClose }: Proj
             Refresh
           </Button>
         </div>
+        <ToggleGroup
+          type="single"
+          value={viewMode}
+          onValueChange={(v) => {
+            // Radix emite "" al deseleccionar el item activo; lo ignoramos para
+            // que siempre quede una vista seleccionada.
+            if (v === "grid" || v === "list") setViewMode(v)
+          }}
+          variant="outline"
+          size="sm"
+          aria-label="Modo de vista"
+        >
+          <ToggleGroupItem value="grid" aria-label="Vista en cuadrícula">
+            <LayoutGrid className="h-4 w-4" />
+          </ToggleGroupItem>
+          <ToggleGroupItem value="list" aria-label="Vista en lista">
+            <List className="h-4 w-4" />
+          </ToggleGroupItem>
+        </ToggleGroup>
       </div>
 
       <Tabs defaultValue="available" className="w-full">
@@ -344,7 +465,7 @@ export function ProjectAssignment({ userId, userEmail, userRole, onClose }: Proj
                     : "No projects available to assign"
                   }
                 </p>
-              ) : (
+              ) : viewMode === "grid" ? (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {filteredAvailableProjects.map((project) => {
                     const perms = getPendingPerms(project.id)
@@ -388,19 +509,14 @@ export function ProjectAssignment({ userId, userEmail, userRole, onClose }: Proj
                             <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-semibold mb-1.5">
                               Permissions on assign
                             </p>
-                            <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                            <div className="grid grid-cols-2 gap-2">
                               {getPermissionFields(project.source).map(({ key, label }) => (
-                                <label
+                                <PermissionToggle
                                   key={key}
-                                  className="flex items-center gap-2 text-sm cursor-pointer select-none min-w-0"
-                                >
-                                  <Checkbox
-                                    checked={perms[key]}
-                                    onCheckedChange={() => togglePendingPerm(project.id, key)}
-                                    aria-label={label}
-                                  />
-                                  <span className="truncate">{label}</span>
-                                </label>
+                                  label={label}
+                                  checked={perms[key]}
+                                  onToggle={() => togglePendingPerm(project.id, key)}
+                                />
                               ))}
                             </div>
                           </div>
@@ -417,6 +533,28 @@ export function ProjectAssignment({ userId, userEmail, userRole, onClose }: Proj
                       </Card>
                     )
                   })}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {filteredAvailableProjects.map((project) => (
+                    <ProjectListRow
+                      key={project.id}
+                      project={project}
+                      perms={getPendingPerms(project.id)}
+                      fields={getPermissionFields(project.source)}
+                      onTogglePerm={(key) => togglePendingPerm(project.id, key)}
+                      action={
+                        <Button
+                          size="sm"
+                          onClick={() => assignProject(project.id)}
+                          disabled={loading}
+                        >
+                          <Plus className="h-4 w-4 mr-1 shrink-0" aria-hidden="true" />
+                          Assign
+                        </Button>
+                      }
+                    />
+                  ))}
                 </div>
               )}
             </CardContent>
@@ -448,7 +586,7 @@ export function ProjectAssignment({ userId, userEmail, userRole, onClose }: Proj
                     : "User has no assigned projects"
                   }
                 </p>
-              ) : (
+              ) : viewMode === "grid" ? (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {filteredAssignedProjects.map((project) => {
                     const perms = project.permissions || DEFAULT_PERMS
@@ -492,19 +630,14 @@ export function ProjectAssignment({ userId, userEmail, userRole, onClose }: Proj
                             <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-semibold mb-1.5">
                               Permissions
                             </p>
-                            <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                            <div className="grid grid-cols-2 gap-2">
                               {getPermissionFields(project.source).map(({ key, label }) => (
-                                <label
+                                <PermissionToggle
                                   key={key}
-                                  className="flex items-center gap-2 text-sm cursor-pointer select-none min-w-0"
-                                >
-                                  <Checkbox
-                                    checked={perms[key]}
-                                    onCheckedChange={() => toggleAssignedPerm(project, key)}
-                                    aria-label={label}
-                                  />
-                                  <span className="truncate">{label}</span>
-                                </label>
+                                  label={label}
+                                  checked={perms[key]}
+                                  onToggle={() => toggleAssignedPerm(project, key)}
+                                />
                               ))}
                             </div>
                           </div>
@@ -522,6 +655,29 @@ export function ProjectAssignment({ userId, userEmail, userRole, onClose }: Proj
                       </Card>
                     )
                   })}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {filteredAssignedProjects.map((project) => (
+                    <ProjectListRow
+                      key={project.id}
+                      project={project}
+                      perms={project.permissions || DEFAULT_PERMS}
+                      fields={getPermissionFields(project.source)}
+                      onTogglePerm={(key) => toggleAssignedPerm(project, key)}
+                      action={
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => unassignProject(project.id)}
+                          disabled={loading}
+                        >
+                          <Minus className="h-4 w-4 mr-1 shrink-0" aria-hidden="true" />
+                          Remove
+                        </Button>
+                      }
+                    />
+                  ))}
                 </div>
               )}
             </CardContent>

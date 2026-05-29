@@ -20,6 +20,7 @@ import {
 } from "lucide-react"
 import { argocdAPI, type ProjectWorkload } from "@/lib/api"
 import { ContainerLogsModal } from "@/components/container-logs-modal"
+import { PinButton } from "@/components/pin-button"
 import { useToast } from "@/hooks/use-toast"
 
 export interface ArgoProject {
@@ -164,9 +165,11 @@ const stripScheme = (u: string) => u.replace(/^https?:\/\//, "")
 interface ArgoProjectCardProps {
   project: ArgoProject
   hidden?: boolean
+  isPinned?: boolean
+  onTogglePin?: () => void
 }
 
-export function ArgoProjectCard({ project, hidden }: ArgoProjectCardProps) {
+export function ArgoProjectCard({ project, hidden, isPinned, onTogglePin }: ArgoProjectCardProps) {
   const [showLogs, setShowLogs] = useState(false)
   const [busy, setBusy] = useState<"sync" | "refresh" | null>(null)
   const [expanded, setExpanded] = useState(false)
@@ -316,6 +319,9 @@ export function ArgoProjectCard({ project, hidden }: ArgoProjectCardProps) {
               <span aria-hidden="true" className="opacity-50">·</span>
               <span className="text-muted-foreground">{project.syncStatus || "—"}</span>
             </span>
+            {onTogglePin && (
+              <PinButton pinned={!!isPinned} onToggle={onTogglePin} />
+            )}
           </div>
         </header>
 

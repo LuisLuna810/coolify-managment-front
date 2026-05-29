@@ -17,6 +17,7 @@ import { projectsAPI, type ProjectWorkload } from "@/lib/api"
 import { EnvModal } from "@/components/env-modal"
 import { ContainerLogsModal } from "@/components/container-logs-modal"
 import { ArgoProjectCard, type ArgoProject } from "@/components/argo-project-card"
+import { PinButton } from "@/components/pin-button"
 import { useToast } from "@/hooks/use-toast"
 
 interface ProjectPermissions {
@@ -88,6 +89,10 @@ interface ProjectCardProps {
   project: Project
   hidden?: boolean
   onStatusChange?: (projectId: string, status: ProjectStatus | null) => void
+  /** Estado de fijado (pin) para mostrar el botón relleno/atenuado. */
+  isPinned?: boolean
+  /** Toggle de fijado. Si no se pasa, no se muestra el botón de pin. */
+  onTogglePin?: () => void
 }
 
 // Exporto el tipo de estado para que el grid pueda filtrar
@@ -194,12 +199,19 @@ const POLL_INTERVAL_REBUILDING = 5_000
 const isInProgressStatus = (status?: string) =>
   status === "in_progress" || status === "queued"
 
-export function ProjectCard({ project, hidden, onStatusChange }: ProjectCardProps) {
+export function ProjectCard({ project, hidden, onStatusChange, isPinned, onTogglePin }: ProjectCardProps) {
   // Si el proyecto viene de ArgoCD, delegamos a un componente especializado.
   // No corremos el polling de Coolify status (no aplica) y los botones son
   // distintos (Sync/Refresh en lugar de Start/Stop/Restart).
   if (project.source === "argocd") {
-    return <ArgoProjectCard project={project as unknown as ArgoProject} hidden={hidden} />
+    return (
+      <ArgoProjectCard
+        project={project as unknown as ArgoProject}
+        hidden={hidden}
+        isPinned={isPinned}
+        onTogglePin={onTogglePin}
+      />
+    )
   }
 
   const [activeAction, setActiveAction] = useState<ActionKey | null>(null)
@@ -500,6 +512,9 @@ export function ProjectCard({ project, hidden, onStatusChange }: ProjectCardProp
                 className={`h-3 w-3 ${statusLoading ? "motion-safe:animate-spin" : ""}`}
               />
             </Button>
+            {onTogglePin && (
+              <PinButton pinned={!!isPinned} onToggle={onTogglePin} />
+            )}
           </div>
         </header>
 

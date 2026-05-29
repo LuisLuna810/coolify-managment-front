@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { ProjectCard, type ProjectStatus } from "@/components/project-card"
+import { usePinnedProjects } from "@/hooks/use-pinned-projects"
 import { Search, X } from "lucide-react"
 
 interface Project {
@@ -133,6 +134,16 @@ export function ProjectsGrid({ projects, loading, emptyMessage }: ProjectsGridPr
   const [runFilter, setRunFilter] = useState<RunFilter>("all")
   const [deployFilter, setDeployFilter] = useState<DeployFilter>("all")
   const [statusMap, setStatusMap] = useState<Record<string, ProjectStatus | null>>({})
+  const { pinnedIds, togglePin } = usePinnedProjects()
+
+  // Reordenar: fijados primero, resto en su orden original. Sort estable
+  // (V8) → conserva el orden dentro de cada grupo. No filtra: las cards que
+  // no matchean se ocultan vía `hidden`, igual que antes.
+  const orderedProjects = useMemo(() => {
+    return [...projects].sort(
+      (a, b) => Number(pinnedIds.has(b.id)) - Number(pinnedIds.has(a.id)),
+    )
+  }, [projects, pinnedIds])
 
   const handleStatusChange = useCallback(
     (projectId: string, status: ProjectStatus | null) => {
@@ -292,12 +303,14 @@ export function ProjectsGrid({ projects, loading, emptyMessage }: ProjectsGridPr
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project) => (
+          {orderedProjects.map((project) => (
             <ProjectCard
               key={project.id}
               project={project}
               hidden={!matches(project)}
               onStatusChange={handleStatusChange}
+              isPinned={pinnedIds.has(project.id)}
+              onTogglePin={() => togglePin(project.id)}
             />
           ))}
         </div>
